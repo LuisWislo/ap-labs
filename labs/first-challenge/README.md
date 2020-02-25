@@ -36,21 +36,21 @@ Note that the answer must be a substring, `pwke` is a subsequence and not a subs
 Build Requirements
 ------------------
 ```
-# Build Requirements here
+Java > 1.8
 ```
 
 
 How to build
 ------------
 ```
-# instructions here
+javac NonRepeatingSubstring.java
 ```
 
 
 How to Run
 ----------
 ```
-# instructions here
+java NonRepeatingSubstring "inputstring"
 ```
 
 
