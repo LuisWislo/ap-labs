@@ -1,0 +1,6 @@
+[2019-07-15 17:17] [ALPM] installed cni-git (r848.220a58f-1)
+[2019-07-15 17:17] [ALPM] transaction completed
+[2019-07-15 17:17] [ALPM] running 'systemd-update.hook'...
+[2019-07-15 17:17] [PACMAN] Running 'pacman --color auto -Rs ethtool cni-git'
+[2019-07-15 17:18] [ALPM] transaction started
+[2019-07-15 17:18] [ALPM] removed cni-git (r848.220a58f-1)
