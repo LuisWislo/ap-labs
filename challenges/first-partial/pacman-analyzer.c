@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Luis Wilson A00226649
+
 #define REPORT_FILE "packages_report.txt"
 #define MAX_LENGTH 1000
 #define DATE_LENGTH 17
@@ -11,8 +13,7 @@
 #define ACTION_LENGTH 15
 #define MANAGER_LENGTH 30
 #define MAX_PACKAGES 5000
-
-
+#define NUMBER_BUFFER_LENGTH 15
 
 void analizeLog(char *logFile, char *report);
 
@@ -143,8 +144,8 @@ int is_in_array(char *pname){
 }
 
 void add_to_packages(char *date, char *pname, char *action){
-    int index;
-    if(index = is_in_array(pname) == -1){
+    int index = is_in_array(pname);
+    if(index == -1){
         global_installed++;
         strcpy(packages[package_index].name, pname);
         strcpy(packages[package_index].install_date, date);
@@ -155,25 +156,21 @@ void add_to_packages(char *date, char *pname, char *action){
     } else {
         if(strcmp(action, "installed") == 0){ //means it was reinstalled
             global_installed++;
-            //update install_date
             strcpy(packages[index].install_date, date);
-            //remove remove_date
             strcpy(packages[index].removal_date, "-");
-            // reset lastupdate_date and many_updates?
 
-        } else if(strcmp(action, "reinstalled") == 0) { //basically same as install again
+        } else if(strcmp(action, "reinstalled") == 0) {
             global_installed++;
             strcpy(packages[index].install_date, date);
             strcpy(packages[index].removal_date, "-");
 
         } else if(strcmp(action, "removed") == 0) {
             global_removed++;
-            //add removal date
             strcpy(packages[index].removal_date, date);
         } else if(strcmp(action, "upgraded") == 0) {
             global_upgraded++;
-            //update local counter
             packages[index].many_updates++;
+            strcpy(packages[index].lastupdate_date, date);
         }
     } 
 }
@@ -202,24 +199,131 @@ void processLine(char *line) {
             getContent(line, pCurrent, ' ', pname);
             //printf("Analyzing this line: %s\n", line);
             add_to_packages(date, pname, action);
-
         }
+    }
+}
+
+void write_to_file(int filedes) {
+
+    char *toWrite;
+    char fornumber[NUMBER_BUFFER_LENGTH];
+    int len, i;
+
+    toWrite = "Pacman Packages Report\n";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+    
+    toWrite = "----------------------\n";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+
+    toWrite = "- Installed packages : ";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+    sprintf(fornumber, "%d", global_installed);
+    len = strlen(fornumber);
+    write(filedes, fornumber, len);
+    write(filedes, "\n", 1);
+
+
+    toWrite = "- Removed packages   : ";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+    sprintf(fornumber, "%d", global_removed);
+    len = strlen(fornumber);
+    write(filedes, fornumber, len);
+    write(filedes, "\n", 1);
+
+    toWrite = "- Upgraded packages  : ";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+    sprintf(fornumber, "%d", global_upgraded);
+    len = strlen(fornumber);
+    write(filedes, fornumber, len);
+    write(filedes, "\n", 1);
+
+    toWrite = "- Current installed  : ";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+    sprintf(fornumber, "%d", global_installed - global_removed);
+    len = strlen(fornumber);
+    write(filedes, fornumber, len);
+    write(filedes, "\n", 1);
+
+    write(filedes, "\n", 1);
+
+    toWrite = "List of packages\n";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+
+    toWrite = "----------------\n";
+    len = strlen(toWrite);
+    write(filedes, toWrite, len);
+
+    for(i=0;i<package_index;i++){
+        toWrite = "- Package Name        : ";
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        toWrite = packages[i].name;
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        write(filedes, "\n", 1);
+
+        toWrite = "  - Install date      : ";
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        toWrite = packages[i].install_date;
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        write(filedes, "\n", 1);
+
+        toWrite = "  - Last update date  : ";
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        toWrite = packages[i].lastupdate_date;
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        write(filedes, "\n", 1);
+
+        toWrite = "  - How many updates  : ";
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        sprintf(fornumber, "%d", packages[i].many_updates);
+        len = strlen(fornumber);
+        write(filedes, fornumber, len);
+
+        write(filedes, "\n", 1);
+
+        toWrite = "  - Removal date      : ";
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        toWrite = packages[i].removal_date;
+        len = strlen(toWrite);
+        write(filedes, toWrite, len);
+
+        write(filedes, "\n", 1);
 
     }
+
 }
 
 void analizeLog(char *logFile, char *report) {
     printf("Generating Report from: [%s] log file\n", logFile);
 
-    int file;
-
-    file = open(logFile, O_RDONLY, 0600);
+    int file = open(logFile, O_RDONLY, 0600);
 
     if(file == -1){
         printf("Failed to open file.\n");
         exit(1);
     } else {
-        printf("Reading file...\n");
 
         char buffer[1];
         char line[MAX_LENGTH];
@@ -238,26 +342,23 @@ void analizeLog(char *logFile, char *report) {
         }
         line[ccounter] = '\0';
         processLine(line);
+        close(file);
 
         if(r == 0){
-            int i;
+            
+            int filedes = open(report, O_CREAT | O_WRONLY, 0600);
 
-            printf("Installed packages: %d\n", global_installed);
-            printf("Removed packages: %d\n", global_removed);
-            printf("Upgraded packages: %d\n", global_upgraded);
-            printf("Current installed: %d\n", global_installed - global_removed);
-
-            printf("-------------------------------\n");
-
-            /*for(i=0; i<package_index;i++){
-                printf("Name: %s  Install date: %s  Last update date: %s  How many updates: %d Removal date: %s\n", packages[i].name, packages[i].install_date, packages[i].lastupdate_date, packages[i].many_updates,packages[i].removal_date);
-            }*/
+            if(filedes < 0){
+                printf("Failed to create/open output file.\n");
+                exit(1);
+            } else {
+                write_to_file(filedes);
+            }
+            
         } else if(r == -1){
             printf("Error reading file.\n");
         }
     }
-
-    close(file);
 
     printf("Report is generated at: [%s]\n", report);
 }
