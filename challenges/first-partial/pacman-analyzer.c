@@ -159,11 +159,6 @@ void add_to_packages(char *date, char *pname, char *action){
             strcpy(packages[index].install_date, date);
             strcpy(packages[index].removal_date, "-");
 
-        } else if(strcmp(action, "reinstalled") == 0) {
-            global_installed++;
-            strcpy(packages[index].install_date, date);
-            strcpy(packages[index].removal_date, "-");
-
         } else if(strcmp(action, "removed") == 0) {
             global_removed++;
             strcpy(packages[index].removal_date, date);
@@ -194,7 +189,7 @@ void processLine(char *line) {
         getContent(line, pCurrent, ' ', action);
         current++;
 
-        if(!strcmp(action, "installed") || !strcmp(action, "removed") || !strcmp(action, "upgraded") || !strcmp(action, "reinstalled")) { 
+        if(!strcmp(action, "installed") || !strcmp(action, "removed") || !strcmp(action, "upgraded")) { 
             char pname[PACKAGE_NAME_LENGTH];
             getContent(line, pCurrent, ' ', pname);
             //printf("Analyzing this line: %s\n", line);
