@@ -26,6 +26,15 @@ General instructions
 - Don't forget to handle errors properly.
 - Coding best practices implementation will be also considered.
 
+Run code (static linking)
+-------------------------
+```
+gcc -c testLogger.c -o test.o
+gcc -c logger.c -o log.o
+gcc test.o log.o -o main.o
+./main.o
+```
+
 How to submit your work
 =======================
 ```
