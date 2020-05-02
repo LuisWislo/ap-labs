@@ -1,4 +1,4 @@
-Challenge: Second Partial Exam
+Challenge: Second Partial Exam 
 ==============================
 
 This is the second term challenge-based partial exam for the Advanced Programming Class. Below you will find each of the challenge's parts details.
