@@ -7,27 +7,46 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
 )
 
+//Luis Wilson A00226649
+
+var clientUsage string = "\nUsage: go run client.go -user <username> -server <address>"
+
 //!+
 func main() {
-	conn, err := net.Dial("tcp", "localhost:8000")
-	if err != nil {
-		log.Fatal(err)
+
+	configuration := os.Args[1:]
+
+	if len(configuration) != 4 {
+		fmt.Println("Invalid number of arguments.", clientUsage)
+	} else if configuration[0] != "-user" || configuration[2] != "-server" {
+		fmt.Println("Unsupported flags.", clientUsage)
+	} else {
+
+		conn, err := net.Dial("tcp", configuration[3])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		io.WriteString(conn, configuration[1])
+
+		done := make(chan struct{})
+		go func() {
+			io.Copy(os.Stdout, conn) // NOTE: ignoring errors
+			log.Println("done")
+			os.Exit(0)
+			done <- struct{}{} // signal the main goroutine
+		}()
+		mustCopy(conn, os.Stdin)
+		conn.Close()
+		<-done // wait for background goroutine to finish
 	}
-	done := make(chan struct{})
-	go func() {
-		io.Copy(os.Stdout, conn) // NOTE: ignoring errors
-		log.Println("done")
-		done <- struct{}{} // signal the main goroutine
-	}()
-	mustCopy(conn, os.Stdin)
-	conn.Close()
-	<-done // wait for background goroutine to finish
 }
 
 //!-
