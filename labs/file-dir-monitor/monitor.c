@@ -4,23 +4,15 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 #include <ftw.h>
-#define NO_EVENTS 1024
 #define EVENT_SIZE (sizeof (struct inotify_event))
-#define LEN_NAME 20
-#define BUFFER_SIZE (NO_EVENTS * (EVENT_SIZE + LEN_NAME))
+
+
+// Luis Wilson A00226649
 
 int fd;
 
 int nftw_function(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
-    int watch;
-
-    watch = inotify_add_watch(fd, fpath, IN_CREATE | IN_MODIFY | IN_DELETE);
-
-    /*if(watch < 0) {
-        errorf("Unable to watch directory\n");
-        return -1;
-    }*/
-
+    inotify_add_watch(fd, fpath, IN_CREATE | IN_MODIFY | IN_DELETE | IN_MOVED_FROM);
     return 0;
 }
 
@@ -69,11 +61,30 @@ int main(int argc, char** argv){
             struct inotify_event *ev = (struct inotify_event *) buffer;
 
             if(ev->mask & IN_CREATE) {
-                infof("Created %s!\n",ev->name);
+                if(ev->mask & IN_ISDIR) {
+                    infof("Created directory: %s\n",ev->name);
+                } else {
+                    infof("Created file: %s\n",ev->name);
+                }
+                
             } else if(ev->mask & IN_MODIFY) {
-                infof("Modified %s!\n",ev->name);
+                if(ev->mask & IN_ISDIR) {
+                    infof("Modified directory: %s\n",ev->name);
+                } else {
+                    infof("Modified file: %s\n",ev->name);
+                }
             } else if(ev->mask & IN_DELETE) {
-                infof("Deleted %s!\n",ev->name);
+                if(ev->mask & IN_ISDIR) {
+                    infof("Deleted directory: %s\n",ev->name);
+                } else {
+                    infof("Deleted file: %s\n",ev->name);
+                }
+            } else if (ev->mask & IN_MOVED_FROM){
+                if(ev->mask & IN_ISDIR) {
+                    infof("Directory %s was renamed.\n",ev->name);
+                } else {
+                    infof("File %s was renamed.\n",ev->name);
+                }
             }
 
             j+= EVENT_SIZE + ev->len;

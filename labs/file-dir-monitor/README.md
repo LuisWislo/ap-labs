@@ -35,6 +35,16 @@ sudo ./monitor /tmp
 ```
 ./monitor $(pwd)
 ```
+How to run
+=================================================
+1. Compile using make
+'''
+make monitor
+'''
+2. Run program:
+'''
+./monitor <directory>
+'''
 
 How to submit your work and check your submission
 =================================================
