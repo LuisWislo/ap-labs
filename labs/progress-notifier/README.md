@@ -56,6 +56,13 @@ General Requirements and Considerations
 - Don't forget to handle errors properly.
 - Coding best practices implementation will be also considered.
 
+How to run
+=================================================
+```
+make notifier
+./base64 --encode input.txt
+```
+
 How to submit your work and check your submission
 =================================================
 ```

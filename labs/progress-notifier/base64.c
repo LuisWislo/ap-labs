@@ -5,10 +5,15 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include<signal.h> 
 #define BASE46_H
 #define CHUNK_SIZE_ENCODE 3
 #define CHUNK_SIZE_DECODE 4
 
+int f_size = 0;
+int progress = 0;
+
+//Luis Wilson A00226649
 
 char base46_map[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -76,21 +81,40 @@ char* base64_decode(char* cipher) {
     return plain;
 }
 
-int encode() {
-
+void handle_sigint(int sig) {
+    warnf("Process interruption. Ending program.\n");
+    exit(1);
 }
 
-int decode() {
-
+void handle_sigusr1(int sig) {
+    float progress_percent = (progress * 100.0)/f_size;
+    infof("Current progress: %.2f /100\n", progress_percent);
+    signal(sig, handle_sigusr1);
 }
+
 
 int proceed(char *which, char *input_file) {
-    int fd = open(input_file, O_RDONLY, 0600);
+
+    int fd = open(input_file, O_RDONLY);
     char *output_name = strcmp(which, "encode") == 0 ? "encoded.txt" : "decoded.txt";
+    
+    f_size = lseek(fd, 0, SEEK_END);
 
-    int output = open(output_name,  O_CREAT | O_WRONLY, 0600);
+    if(f_size < 0) {
+        errorf("Error: Could not retrieve file size.\n");
+        return -1;
+    }
 
-    if(fd == -1) {
+    int returning = lseek(fd, -f_size, SEEK_END);
+
+    if(returning == -1) {
+        errorf("Error: Could not retrieve file size.\n");
+        return -1;
+    }
+    
+    int output = open(output_name,  O_CREAT | O_WRONLY, 0644);
+
+    if(output == -1) {
         errorf("Failed to open file.\n");
         return -1;
     }
@@ -115,10 +139,22 @@ int proceed(char *which, char *input_file) {
         }
         int len = strlen(to_do);
         write(output, to_do, len);
+        progress += r;
     }
+    infof("Done!\n");
 }
 
 int main(int argc, char** argv){
+
+    if(signal(SIGINT, handle_sigint) == SIG_ERR) {
+        errorf("Signal error.\n");
+        return -1;
+    }
+
+    if(signal(SIGUSR1, handle_sigusr1) == SIG_ERR) {
+        errorf("Signal error.\n");
+        return -1;
+    }
 
 
     if(argc != 3) {
