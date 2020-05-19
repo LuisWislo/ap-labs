@@ -33,8 +33,12 @@ type linkAndDepth struct {
 // enforce a limit of 20 concurrent requests.
 var tokens = make(chan struct{}, 20)
 
-func crawl(url string) []string {
+func crawl(url string, currentDepth int) []string {
 	fmt.Println(url)
+	if currentDepth == 0 {
+		empty := make([]string, 0)
+		return empty
+	}
 	tokens <- struct{}{} // acquire a token
 	list, err := links.Extract(url)
 	<-tokens // release the token
@@ -77,7 +81,7 @@ func main() {
 				seen[link] = true
 				n++
 				go func(link string) {
-					newLinks := crawl(link)
+					newLinks := crawl(link, list.depth)
 					newDepth := list.depth - 1
 					newWork := linkAndDepth{newLinks, newDepth}
 					worklist <- newWork
